@@ -4,10 +4,16 @@ import pandas as pd
 def render_fuzzy():
     st.markdown("""<style>
     .card { background-color: #161b22; border: 1px solid #2a2f36; border-radius: 12px; padding: 20px; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .card-header { color: #00c2ff; font-weight: 600; font-size: 1.2rem; margin-bottom: 0.5rem; border-bottom: 1px solid #2a2f36; padding-bottom: 0.5rem; }
+    .card h3 { color: #00c2ff; font-weight: 600; font-size: 1.2rem; margin-top: 0; margin-bottom: 0.5rem; border-bottom: 1px solid #2a2f36; padding-bottom: 0.5rem; }
+    .card p { color: #8b949e; font-size: 0.9rem; margin: 0; }
     </style>""", unsafe_allow_html=True)
-
-    st.markdown('<div class="card"><div class="card-header">Fuzzy Vendor Matching</div><p style="color:#8b949e; font-size:0.9rem; margin:0;">Review potentially duplicate vendor names or spoofing attempts.</p></div>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="card">
+        <h3>Fuzzy Vendor Matching</h3>
+        <p>Review potentially duplicate vendor names or spoofing attempts.</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     vendors = st.session_state.get("vendors")
     if not vendors:
@@ -27,7 +33,11 @@ def render_fuzzy():
             return ['color: #d29922; background-color: rgba(210, 153, 34, 0.1)'] * len(row)
         return [''] * len(row)
         
-    st.markdown('<div class="card"><div class="card-header">Matched Entities</div></div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="card">
+        <h3>Matched Entities</h3>
+    </div>
+    """, unsafe_allow_html=True)
     if not df_vendors.empty:
         st.dataframe(df_vendors.style.apply(highlight_risk, axis=1), use_container_width=True)
     else:
