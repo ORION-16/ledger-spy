@@ -2,20 +2,21 @@ import sys
 import os
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, base_dir)
-sys.path.insert(0, os.path.join(base_dir, "ml", "fea-anamoly"))
-sys.path.insert(0, os.path.join(base_dir, "ml", "fea-benford"))
-sys.path.insert(0, os.path.join(base_dir, "ml", "fea-fuzzy"))
+
+# Task 1: Safe Import for Data Integrity
+try:
+    from ml.fea_dataintegrity.data_integrity import compute_data_integrity
+except Exception:
+    compute_data_integrity = None
 
 import streamlit as st
 import pandas as pd
 
 # ML imports with stub fallback
-from anomaly import detect_anomalies
-from benford import benford_analysis
-from fuzzy import find_similar_vendors
-from ml.stubs import build_risk_graph, explain_risk
-
-from ml.stubs import compute_readiness_score, generate_memo
+from ml.fea_anomaly.anomaly import detect_anomalies
+from ml.fea_benford.benford import benford_analysis
+from ml.fea_fuzzy.fuzzy import find_similar_vendors
+from ml.stubs import build_risk_graph, explain_risk, compute_readiness_score, generate_memo
 
 # UI imports
 from ui.upload import render_upload
@@ -67,17 +68,23 @@ if uploaded_file:
     df.columns = df.columns.str.lower()
     st.session_state["df"] = df
 
-    # Run all ML and store in session state
-    readiness_raw = compute_readiness_score(df)
-    st.session_state["readiness"] = {
-        "score": readiness_raw.get("score", 0.0),
-        "null_pct": readiness_raw.get("null_pct", readiness_raw.get("nulls", 0.0)),
-        "dup_pct": readiness_raw.get(
-            "dup_pct",
-            (readiness_raw.get("duplicates", 0) / len(df) * 100.0) if len(df) else 0.0,
-        ),
-        "col_count": readiness_raw.get("col_count", len(df.columns)),
-    }
+    # Task 3: Replace assignment logic
+    if compute_data_integrity:
+        integrity = compute_data_integrity(df)
+        st.session_state["readiness"] = integrity
+    else:
+        # fallback to existing logic (DO NOT REMOVE)
+        readiness_raw = compute_readiness_score(df)
+        st.session_state["readiness"] = {
+            "score": readiness_raw.get("score", 0.0),
+            "null_pct": readiness_raw.get("null_pct", readiness_raw.get("nulls", 0.0)),
+            "dup_pct": readiness_raw.get(
+                "dup_pct",
+                (readiness_raw.get("duplicates", 0) / len(df) * 100.0) if len(df) else 0.0,
+            ),
+            "col_count": readiness_raw.get("col_count", len(df.columns)),
+        }
+
     anomaly_df = detect_anomalies(df)
     if not hasattr(anomaly_df, "columns"):
         anomaly_df = pd.DataFrame(anomaly_df)
