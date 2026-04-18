@@ -1,20 +1,18 @@
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, base_dir)
+sys.path.insert(0, os.path.join(base_dir, "ml", "fea-anamoly"))
+sys.path.insert(0, os.path.join(base_dir, "ml", "fea-benford"))
 
 import streamlit as st
 import pandas as pd
 
 # ML imports with stub fallback
-try:
-    from ml.anomaly import detect_anomalies, benford_analysis
-except ImportError:
-    from ml.stubs import detect_anomalies, benford_analysis
-
-try:
-    from ml.fuzzy import find_similar_vendors, build_risk_graph, explain_risk
-except ImportError:
-    from ml.stubs import find_similar_vendors, build_risk_graph, explain_risk
+from anomaly import detect_anomalies
+from benford import benford_analysis
+from ml.fuzzy import find_similar_vendors
+from ml.stubs import build_risk_graph, explain_risk
 
 from ml.stubs import compute_readiness_score, generate_memo
 
@@ -65,6 +63,7 @@ uploaded_file = st.sidebar.file_uploader("Upload Ledger CSV", type=["csv"])
 
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
+    df.columns = df.columns.str.lower()
     st.session_state["df"] = df
 
     # Run all ML and store in session state

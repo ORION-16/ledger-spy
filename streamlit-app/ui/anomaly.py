@@ -1,119 +1,110 @@
+from ui.styles import apply_global_styles
 import streamlit as st
 import pandas as pd
 
 def render_anomaly():
-    st.markdown('''<style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
-    /* Aurora Background */
-    .stApp { 
-        background: radial-gradient(circle at 50% 50%, #1a1f35 0%, #0e1117 100%);
-        color: #e6edf3; 
-        font-family: 'Inter', sans-serif;
-    }
-    
-    /* Hide default sidebar radio buttons to make them look like menu items */
-    div.stRadio > div { background: transparent; gap: 8px; }
-    div.stRadio > label { display: none; }
-    div.stRadio div[role="radiogroup"] > label {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255,255,255,0.05);
-        border-radius: 8px;
-        padding: 12px 16px;
-        transition: all 0.3s ease;
-    }
-    div.stRadio div[role="radiogroup"] > label:hover {
-        background: rgba(0, 194, 255, 0.1);
-        border-color: #00c2ff;
-        box-shadow: 0 0 15px rgba(0, 194, 255, 0.2);
-        transform: translateX(5px);
-    }
-    div.stRadio div[role="radiogroup"] > label[data-checked="true"] {
-        background: linear-gradient(90deg, rgba(0,194,255,0.2) 0%, rgba(0,0,0,0) 100%);
-        border-left: 4px solid #00c2ff;
-    }
-
-    /* Target Streamlit Metrics & Dataframes - The Bento Boxes */
-    [data-testid="stMetric"], [data-testid="stDataFrame"] {
-        background: rgba(20, 25, 35, 0.6);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 16px;
-        padding: 20px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    [data-testid="stMetric"]:hover, [data-testid="stDataFrame"]:hover {
-        transform: translateY(-5px) scale(1.02);
-        box-shadow: 0 15px 40px rgba(0, 194, 255, 0.15);
-        border-color: rgba(0, 194, 255, 0.4);
-    }
-    
-    /* Adds a subtle holographic sweep across cards on hover */
-    [data-testid="stMetric"]::before {
-        content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
-        background: linear-gradient(to right, transparent, rgba(255,255,255,0.05), transparent);
-        transform: skewX(-20deg); transition: 0.5s;
-    }
-    [data-testid="stMetric"]:hover::before { left: 150%; }
-
-    [data-testid="stMetricLabel"] > div > div > p { color: #a1aab5 !important; font-weight: 600; }
-    [data-testid="stMetricValue"] > div {
-        color: #fff !important; 
-        font-weight: 700; 
-        text-shadow: 0 0 20px rgba(0,194,255,0.6);
-    }
-
-    /* Custom Headers (H1, H2) with glow */
-    h1, h2, h3 { color: #ffffff !important; letter-spacing: -0.02em; }
-    h3 { text-shadow: 0 0 10px rgba(255,255,255,0.2); }
-
-    /* Buttons */
-    .stButton > button {
-        background: linear-gradient(135deg, #00c2ff 0%, #0077ff 100%);
-        color: white; border: none; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,194,255,0.3);
-        transition: all 0.2s;
-    }
-    .stButton > button:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,194,255,0.5); }
-    </style>''', unsafe_allow_html=True)
+    apply_global_styles()
     
     st.markdown("""
-    <div class="card">
-        <h3>Anomaly Detection</h3>
-        <p>Identify statistical deviations and unusual transaction patterns.</p>
+    <div class="card" style="padding: 16px 24px; margin-bottom: 24px;">
+        <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+            🚨 Anomaly Detection
+        </h2>
+        <p style="margin-top: 4px; color: #9ca3af;">Identify statistical deviations and unusual transaction patterns across the ledger.</p>
     </div>
     """, unsafe_allow_html=True)
     
-    df_anomaly = st.session_state.get("anomalies")
-    if df_anomaly is None or "is_anomaly" not in df_anomaly.columns:
-        st.info("No anomaly data available.")
+    df = st.session_state.get("anomalies")
+    if df is None or not isinstance(df, pd.DataFrame) or "is_anomaly" not in df.columns:
+        st.info("No anomaly data available. Please upload a dataset to process.")
         return
         
-    total_transactions = len(df_anomaly)
-    total_anomalies = int(df_anomaly["is_anomaly"].sum())
-    pct_anomalies = (total_anomalies / total_transactions * 100) if total_transactions > 0 else 0
+    total = len(df)
+    anomalies = int(df["is_anomaly"].sum()) if "is_anomaly" in df.columns else 0
+    percent = (anomalies / total * 100) if total else 0
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Transactions", f"{total:,}")
+    col2.metric("Anomalies Detected", f"{anomalies:,}")
+    col3.metric("Anomaly Rate", f"{percent:.2f}%")
     
-    with st.container():
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Flagged Anomalies", f"{total_anomalies:,}")
-        with col2:
-            st.metric("Percentage Flagged", f"{pct_anomalies:.2f}%")
+    st.info(f"{anomalies:,} suspicious transactions detected out of {total:,} total records.")
+    
+    # Hide encoded/unnecessary columns to keep the UI clean
+    cols_to_hide = ["approver", "department", "vendor_city", "merchant_category_code"]
+    clean_df = df.drop(columns=cols_to_hide, errors="ignore")
+
+    if "hybrid_risk_score" in clean_df.columns:
+        st.markdown("""
+            <h3 style='margin-top: 2rem; margin-bottom: 1rem; color: #ffffff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;'>
+                Risk Score Distribution
+            </h3>
+        """, unsafe_allow_html=True)
+        # Plot distribution
+        st.bar_chart(clean_df["hybrid_risk_score"].dropna().head(1000), color="#8b5cf6", use_container_width=True)
+
+        st.markdown("""
+            <h3 style='margin-top: 2rem; margin-bottom: 1rem; color: #ffffff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;'>
+                Top Risky Transactions
+            </h3>
+        """, unsafe_allow_html=True)
+        
+        top_risky = clean_df.sort_values("hybrid_risk_score", ascending=False).head(20)
+        st.dataframe(
+            top_risky, 
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "hybrid_risk_score": st.column_config.ProgressColumn(
+                    "Risk Score",
+                    help="Anomaly risk probability",
+                    format="%.3f",
+                    min_value=0,
+                    max_value=1,
+                ),
+                "is_anomaly": st.column_config.CheckboxColumn("Anomaly Flag"),
+                "amount": st.column_config.NumberColumn("Amount", format="$ %.2f")
+            }
+        )
             
     st.markdown("""
-    <div class="card">
-        <h3>Flagged Transactions</h3>
-    </div>
+        <h3 style='margin-top: 3rem; margin-bottom: 1rem; color: #ffffff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;'>
+            <svg style="width:20px; height:20px; vertical-align:middle; margin-right:8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            Transaction Explorer
+        </h3>
     """, unsafe_allow_html=True)
     
-    def highlight_anomaly(row):
-        if row.get("is_anomaly", False):
-            return ['background-color: rgba(255, 123, 114, 0.15); color: #ff7b72;'] * len(row)
-        return [''] * len(row)
-        
-    styled_df = df_anomaly.style.apply(highlight_anomaly, axis=1)
-    st.dataframe(styled_df, use_container_width=True)
+    col_filter, col_caption = st.columns([1, 2])
+    with col_filter:
+        show_only_anomalies = st.checkbox("Show only anomalies (High Risk)", value=True)
+    
+    display_df = clean_df[clean_df["is_anomaly"] == True] if show_only_anomalies else clean_df
+
+    MAX_ROWS = 500
+    display_df_head = display_df.head(MAX_ROWS)
+    
+    with col_caption:
+        if len(display_df) > MAX_ROWS:
+            st.markdown(f"<p style='color: #9ca3af; font-size: 0.9rem; text-align: right; margin-top: 5px;'>Showing {len(display_df_head):,} of {len(display_df):,} rows (Limited for Performance)</p>", unsafe_allow_html=True)
+        elif show_only_anomalies:
+            st.markdown(f"<p style='color: #ff7b72; font-size: 0.9rem; text-align: right; margin-top: 5px; font-weight: 600;'>Displaying all {len(display_df_head):,} Anomaly Hits</p>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<p style='color: #9ca3af; font-size: 0.9rem; text-align: right; margin-top: 5px;'>Showing {len(display_df_head):,} rows</p>", unsafe_allow_html=True)
+            
+    # Display optimized dataframe natively
+    st.dataframe(
+        display_df_head, 
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "hybrid_risk_score": st.column_config.ProgressColumn(
+                "Risk Score",
+                help="Anomaly risk probability",
+                format="%.3f",
+                min_value=0,
+                max_value=1,
+            ),
+            "is_anomaly": st.column_config.CheckboxColumn("Anomaly Flag"),
+            "amount": st.column_config.NumberColumn("Amount", format="$ %.2f")
+        }
+    )
