@@ -1,29 +1,34 @@
+from ui.styles import apply_global_styles
 import streamlit as st
 
 def render_integrity():
-    st.header("Data Integrity Dashboard")
-    st.caption("Review the health and readiness of the uploaded data.")
-    st.divider()
+    apply_global_styles()
+    
+    st.markdown("""
+    <div class="card">
+        <h3>Data Integrity Dashboard</h3>
+        <p>Data quality metrics and readiness</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     readiness = st.session_state.get("readiness")
     if not readiness:
-        st.warning("No readiness data generated.")
+        st.info("No data available.")
         return
         
-    st.subheader(f"Overall Readiness Score: {readiness['score']:.1f}%")
-    st.progress(readiness['score'] / 100.0)
+    score = readiness.get('score', 0.0)
+    null_pct = readiness.get('null_pct', readiness.get('nulls', 0.0))
+    dup_pct = readiness.get('dup_pct', readiness.get('duplicates', 0.0))
+    cols = readiness.get('col_count', readiness.get('columns', 'N/A'))
     
-    st.divider()
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric("Missing Values", f"{readiness['null_pct']:.2f}%", delta_color="inverse")
-    with col2:
-        st.metric("Duplicate Rows", f"{readiness['dup_pct']:.2f}%", delta_color="inverse")
-    with col3:
-        st.metric("Total Columns", readiness['col_count'])
-    
-    if readiness['score'] < 80:
-        st.error("Data Quality is low. Proceed with caution when analyzing.")
-    else:
-        st.success("Data Quality is acceptable for analysis.")
+    with st.container():
+        st.metric("Data Quality Score", f"{score:.1f}%")
+        
+    with st.container():
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Missing Values", f"{null_pct:.2f}%")
+        with col2:
+            st.metric("Duplicate Rows", f"{dup_pct:.2f}%")
+        with col3:
+            st.metric("Column Count", cols)

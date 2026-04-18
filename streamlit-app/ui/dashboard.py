@@ -1,61 +1,42 @@
+from ui.styles import apply_global_styles
 import streamlit as st
-import pandas as pd
-import plotly.express as px
 
 def render_dashboard():
-    st.header("Risk Dashboard")
-    st.caption("Executive summary of all data risks and final decision memo.")
-    st.divider()
+    apply_global_styles()
     
-    df = st.session_state.get("df")
-    df_anomaly = st.session_state.get("df_anomaly")
-    matches_df = st.session_state.get("vendor_matches")
-    risk_summary = st.session_state.get("risk_summary")
+    st.markdown("""
+    <div class="card">
+        <h3>
+            <svg xmlns="http://www.w3.org/-2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-activity"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            LedgerSpy Executive Dashboard
+        </h3>
+        <p>Intelligence overview for current audit engagement.</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    total_tx = len(df) if df is not None else 0
-    anomalies_count = len(df_anomaly[df_anomaly["is_anomaly"]]) if df_anomaly is not None and "is_anomaly" in df_anomaly.columns else 0
+    risk_scores = st.session_state.get("risk_scores", {})
     
-    overall_risk = "N/A"
-    if risk_summary:
-        overall_risk = risk_summary.get("overall_risk", "N/A")
+    total_tx = risk_scores.get("total", 0)
+    anomalies_count = risk_scores.get("anomaly_count", 0)
+    overall_risk = risk_scores.get("overall_risk", "N/A")
     
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Transactions", f"{total_tx:,}")
-    with col2:
-        st.metric("Anomalies Found", f"{anomalies_count:,}")
-    with col3:
-        st.metric("Overall Risk Score", overall_risk)
-        
-    st.divider()
-    st.subheader("Transaction Risk Distribution")
+    with st.container():
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Transactions", f"{total_tx:,}")
+        with col2:
+            st.metric("Anomalies Detected", f"{anomalies_count:,}")
+        with col3:
+            st.metric("Overall Risk Level", overall_risk)
     
-    # Base it on our mock data
-    high = anomalies_count
-    medium = len(matches_df) if matches_df is not None else 0
-    low = max(total_tx - (high + medium), 0)
+    st.markdown("""
+    <div class="card">
+        <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            Audit Memo
+        </h3>
+    </div>
+    """, unsafe_allow_html=True)
     
-    pie_data = pd.DataFrame({
-        "Risk Bucket": ["High", "Medium", "Low"],
-        "Count": [high, medium, low]
-    })
-    
-    fig = px.pie(
-        pie_data, 
-        values="Count", 
-        names="Risk Bucket", 
-        color="Risk Bucket",
-        color_discrete_map={"High": "red", "Medium": "orange", "Low": "green"},
-        title="Distribution of Identified Risks"
-    )
-    st.plotly_chart(fig, use_container_width=True)
-    
-    st.divider()
-    st.subheader("Audit Memo Generation")
-    
-    if st.button("Generate Audit Memo", type="primary", use_container_width=True):
-        st.session_state["generate_memo"] = True
-        st.rerun()
-        
-    if risk_summary and risk_summary.get("memo"):
-        st.text_area("Final Output Memo", value=risk_summary["memo"], height=150)
+    audit_memo = st.session_state.get("audit_memo", "No memo generated.")
+    st.markdown(f'<div class="mono-block">{audit_memo}</div>', unsafe_allow_html=True)
