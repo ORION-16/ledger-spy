@@ -4,6 +4,7 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, base_dir)
 sys.path.insert(0, os.path.join(base_dir, "ml", "fea-anamoly"))
 sys.path.insert(0, os.path.join(base_dir, "ml", "fea-benford"))
+sys.path.insert(0, os.path.join(base_dir, "ml", "fea-fuzzy"))
 
 import streamlit as st
 import pandas as pd
@@ -11,7 +12,7 @@ import pandas as pd
 # ML imports with stub fallback
 from anomaly import detect_anomalies
 from benford import benford_analysis
-from ml.fuzzy import find_similar_vendors
+from fuzzy import find_similar_vendors
 from ml.stubs import build_risk_graph, explain_risk
 
 from ml.stubs import compute_readiness_score, generate_memo
