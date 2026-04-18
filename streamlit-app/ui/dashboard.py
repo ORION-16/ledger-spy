@@ -38,5 +38,16 @@ def render_dashboard():
     </div>
     """, unsafe_allow_html=True)
     
-    audit_memo = st.session_state.get("audit_memo", "No memo generated.")
-    st.markdown(f'<div class="mono-block">{audit_memo}</div>', unsafe_allow_html=True)
+    audit_memo = st.session_state.get("audit_memo")
+    
+    if not audit_memo:
+        st.warning("No audit memo available. Upload data first.")
+    else:
+        st.text_area("Generated Audit Memo", audit_memo, height=400)
+    
+        st.download_button(
+            label="📥 Download Memo",
+            data=audit_memo,
+            file_name="audit_memo.txt",
+            mime="text/plain"
+        )

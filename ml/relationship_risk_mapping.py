@@ -473,9 +473,13 @@ def render_graph(G, metrics):
 
     net.barnes_hut()
 
-    net.write_html("risk_graph.html")
+    html_str = net.generate_html()
 
+    # Still write for CLI usage
+    net.write_html("risk_graph.html")
     print("[SAVED] risk_graph.html")
+    
+    return html_str
 
 
 # =============================================================
@@ -585,6 +589,37 @@ def create_dashboard(metrics):
 
     print("[SAVED] Dashboard charts")
 
+
+
+def run_risk_pipeline(df: pd.DataFrame, fuzzy_df: pd.DataFrame = None, top_vendors: int = 80):
+    """
+    Main entry point for Streamlit application to run risk mapping directly in memory.
+    """
+    print("[INFO] Starting in-memory risk pipeline...")
+    
+    # 1) Work with copies
+    df_clean = df.copy()
+    if fuzzy_df is None or fuzzy_df.empty:
+        # Create dummy fuzzy DF if none provided
+        fuzzy_df = pd.DataFrame(columns=["vendor_1", "vendor_2"])
+    
+    # Optional mapping if "vendor_1" and "vendor_2" are in fuzzy_df
+    if "vendor_1" in fuzzy_df.columns and "vendor_2" in fuzzy_df.columns:
+        df_clean, mapping = canonicalize_vendors(df_clean, fuzzy_df)
+    
+    # 2) Edges
+    edges = aggregate_edges(df_clean, top_vendors=top_vendors)
+    
+    # 3) Build Graph
+    G = build_graph(edges)
+    
+    # 4) Compute Scores
+    metrics_df = compute_scores(G, fuzzy_df)
+    
+    # 5) Render Interactive HTML
+    net_html = render_graph(G, metrics_df)
+    
+    return metrics_df, G, net_html
 
 
 # =============================================================
