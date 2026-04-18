@@ -13,7 +13,7 @@ def render_fuzzy():
     """, unsafe_allow_html=True)
     
     vendors = st.session_state.get("vendors")
-    if not vendors:
+    if vendors is None:
         st.info("No fuzzy matching data available.")
         return
         
@@ -21,6 +21,10 @@ def render_fuzzy():
         df_vendors = pd.DataFrame(vendors)
     else:
         df_vendors = vendors
+
+    if not isinstance(df_vendors, pd.DataFrame) or df_vendors.empty:
+        st.warning("Empty vendor list.")
+        return
         
     def highlight_risk(row):
         risk = str(row.get("risk", "")).lower()
@@ -35,7 +39,4 @@ def render_fuzzy():
         <h3>Matched Entities</h3>
     </div>
     """, unsafe_allow_html=True)
-    if not df_vendors.empty:
-        st.dataframe(df_vendors.style.apply(highlight_risk, axis=1), use_container_width=True)
-    else:
-        st.warning("Empty vendor list.")
+    st.dataframe(df_vendors.style.apply(highlight_risk, axis=1), use_container_width=True)
