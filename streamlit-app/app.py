@@ -1,165 +1,208 @@
+import sys
+import os
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, base_dir)
+
+# Task 1: Safe Import for Data Integrity
+try:
+    from ml.fea_dataintegrity.data_integrity import compute_data_integrity
+except Exception:
+    compute_data_integrity = None
+
 import streamlit as st
 import pandas as pd
-import numpy as np
-import plotly.express as px
 
-# --- PAGE CONFIG ---
-st.set_page_config(
-    page_title="LedgerSpy 🔍",
-    page_icon="🔍",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# ML imports with stub fallback
+from ml.fea_anomaly.anomaly import detect_anomalies
+from ml.fea_benford.benford import benford_analysis
+from ml.fea_fuzzy.fuzzy import find_similar_vendors
+from ml.stubs import build_risk_graph, explain_risk, compute_readiness_score, generate_memo
+from ml.audit_memo import generate_audit_memo
 
-# --- MODULE IMPORTS & STUBS ---
-# Try importing ML modules, fallback to inline stubs if they don't exist yet
-try:
-    from ml.utils import compute_readiness_score
-except ImportError:
-    def compute_readiness_score(df):
-        null_avg = df.isnull().mean().mean() * 100
-        dup_pct = (df.duplicated().sum() / len(df)) * 100
-        score = max(0, 100 - (null_avg + dup_pct))
-        return {
-            "score": score,
-            "null_pct": null_avg,
-            "dup_pct": dup_pct,
-            "col_count": len(df.columns)
-        }
-
-try:
-    from ml.anomaly import detect_anomalies, benford_analysis
-except ImportError:
-    def detect_anomalies(df):
-        df_out = df.copy()
-        # Ensure we have an amount column for plotting
-        if "amount" not in df_out.columns:
-            num_cols = df_out.select_dtypes(include=[np.number]).columns
-            if len(num_cols) > 0:
-                df_out["amount"] = df_out[num_cols[0]]
-            else:
-                df_out["amount"] = np.random.uniform(10, 5000, size=len(df))
-        
-        np.random.seed(42)
-        df_out["anomaly_score"] = np.random.uniform(0, 100, size=len(df))
-        df_out["is_anomaly"] = df_out["anomaly_score"] > 85
-        return df_out
-
-    def benford_analysis(df):
-        # Fake expected vs actual benford distribution
-        digits = list(range(1, 10))
-        expected = [30.1, 17.6, 12.5, 9.7, 7.9, 6.7, 5.8, 5.1, 4.6]
-        # Generate some fake actuals slightly off from expected
-        actual = [max(0, e + np.random.uniform(-2, 2)) for e in expected]
-        return pd.DataFrame({"Digit": digits, "Expected": expected, "Actual": actual})
-
-try:
-    from ml.fuzzy import find_similar_vendors, explain_risk, get_risk_scores
-except ImportError:
-    def find_similar_vendors(df):
-        # Find string columns that might be vendors
-        str_cols = df.select_dtypes(include=['object']).columns
-        if len(str_cols) > 0:
-            vendor_col = str_cols[0]
-            vendors = df[vendor_col].dropna().unique()
-            if len(vendors) >= 2:
-                return pd.DataFrame([
-                    {"vendor_a": str(vendors[0]), "vendor_b": str(vendors[1]) + " Inc", "similarity_score": 92.5, "risk": "High"},
-                    {"vendor_a": str(vendors[0]) + " LLC", "vendor_b": str(vendors[0]) + " LTD", "similarity_score": 88.0, "risk": "Medium"},
-                    {"vendor_a": "Vendor X", "vendor_b": "Vender X", "similarity_score": 95.0, "risk": "High"}
-                ])
-                
-        return pd.DataFrame([
-            {"vendor_a": "Acme Corp", "vendor_b": "Ackme Corp", "similarity_score": 92.5, "risk": "High"},
-            {"vendor_a": "Global Tech", "vendor_b": "Global Technologies", "similarity_score": 88.0, "risk": "Medium"}
-        ])
-        
-    def explain_risk(df):
-        return [f"Transaction {i} flagged due to unusual matching patterns." for i in range(min(5, len(df)))]
-
-    def get_risk_scores(df):
-        return {
-            "overall_risk": "Medium",
-            "memo": f"LedgerSpy analyzed {len(df)} transactions. We identified potential risks primarily in vendor matching and slight deviations in Benford's law. Manual review recommended for {int(len(df) * 0.05)} transactions."
-        }
-
-# --- IMPORT UI COMPONENT RENDERERS ---
+# UI imports
 from ui.upload import render_upload
 from ui.integrity import render_integrity
-from ui.anomaly import render_anomaly
+try:
+    from ui.anomaly import render_anomaly
+except ImportError:
+    def render_anomaly(): st.warning("Anomaly UI unavailable. Install required UI dependencies (e.g., plotly).", icon="🚧")
 from ui.fuzzy import render_fuzzy
-from ui.dashboard import render_dashboard
+try:
+    from ui.benford import render_benford
+except ImportError:
+    def render_benford(): st.warning("Benford UI not implemented yet.", icon="🚧")
+try:
+    from ui.risk_map import render_risk_map
+except ImportError:
+    def render_risk_map(): st.warning("Risk Map UI not implemented yet.", icon="🚧")
+try:
+    from ui.explainability import render_explainability
+except ImportError:
+    def render_explainability(): st.warning("Explainability UI not implemented yet.", icon="🚧")
+try:
+    from ui.dashboard import render_dashboard
+except ImportError:
+    def render_dashboard(): st.warning("Dashboard UI unavailable. Install required UI dependencies (e.g., plotly).", icon="🚧")
+try:
+    from ui.reconciliation import render_reconciliation
+except ImportError:
+    def render_reconciliation(): st.warning("Reconciliation UI not implemented yet.", icon="🚧")
+try:
+    from ui.benchmark_page import render_benchmark
+except ImportError:
+    def render_benchmark(): st.warning("Benchmark UI not implemented yet.", icon="🚧")
+try:
+    from ui.simulation import render_simulation
+except ImportError:
+    def render_simulation(): st.warning("Simulation UI not implemented yet.", icon="🚧")
 
-# --- SESSION STATE INITIALIZATION ---
-if "df" not in st.session_state:
-    st.session_state["df"] = None
-if "uploaded_filename" not in st.session_state:
-    st.session_state["uploaded_filename"] = None
-if "readiness" not in st.session_state:
-    st.session_state["readiness"] = None
-if "df_anomaly" not in st.session_state:
-    st.session_state["df_anomaly"] = None
-if "benford_df" not in st.session_state:
-    st.session_state["benford_df"] = None
-if "vendor_matches" not in st.session_state:
-    st.session_state["vendor_matches"] = None
-if "risk_explanations" not in st.session_state:
-    st.session_state["risk_explanations"] = None
-if "risk_summary" not in st.session_state:
-    st.session_state["risk_summary"] = None
+st.set_page_config(page_title="LedgerSpy", layout="wide", page_icon="🔍")
 
-# --- SIDEBAR NAVIGATION ---
-st.sidebar.title("LedgerSpy Navigation")
-sections = {
-    "Upload & Preview": render_upload,
-    "Data Integrity Dashboard": render_integrity,
-    "Anomaly Detection": render_anomaly,
-    "Fuzzy Vendor Match": render_fuzzy,
-    "Risk Dashboard": render_dashboard
-}
-selection = st.sidebar.radio("Go to", list(sections.keys()))
-
-# --- GLOBAL FILE UPLOAD ---
+st.sidebar.image("https://via.placeholder.com/150x50?text=LedgerSpy", width=150)
+st.sidebar.title("🔍 LedgerSpy")
+st.sidebar.caption("Air-Gapped Forensic Auditing")
 st.sidebar.divider()
-st.sidebar.header("Data Input")
-uploaded_file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
 
-if uploaded_file is not None:
-    # Only load if changed
-    if st.session_state["df"] is None or st.session_state["uploaded_filename"] != uploaded_file.name:
-        try:
-            df = pd.read_csv(uploaded_file)
-            st.session_state["df"] = df
-            st.session_state["uploaded_filename"] = uploaded_file.name
+section = st.sidebar.radio("Navigate", [
+    "📤 Upload & Preview",
+    "📋 Data Integrity",
+    "📊 Benford's Law",
+    "🚨 Anomaly Detection",
+    "🔗 Fuzzy Vendor Match",
+    "🏦 Reconciliation",
+    "🕸️ Relational Risk Map",
+    "🧠 Explainable Risk",
+    "📝 Dashboard & Memo",
+    "📈 Monte Carlo Stress Test",
+    "🏦 Industry Benchmark",
+])
+
+uploaded_file = st.sidebar.file_uploader("Upload Ledger CSV", type=["csv"])
+
+if uploaded_file:
+    df = pd.read_csv(uploaded_file)
+    df.columns = df.columns.str.lower()
+    st.session_state["df"] = df
+
+    # Task 3: Replace assignment logic
+    if compute_data_integrity:
+        integrity = compute_data_integrity(df)
+        st.session_state["readiness"] = integrity
+    else:
+        # fallback to existing logic (DO NOT REMOVE)
+        readiness_raw = compute_readiness_score(df)
+        st.session_state["readiness"] = {
+            "score": readiness_raw.get("score", 0.0),
+            "null_pct": readiness_raw.get("null_pct", readiness_raw.get("nulls", 0.0)),
+            "dup_pct": readiness_raw.get(
+                "dup_pct",
+                (readiness_raw.get("duplicates", 0) / len(df) * 100.0) if len(df) else 0.0,
+            ),
+            "col_count": readiness_raw.get("col_count", len(df.columns)),
+        }
+
+    anomaly_df = detect_anomalies(df)
+    if not hasattr(anomaly_df, "columns"):
+        anomaly_df = pd.DataFrame(anomaly_df)
+
+    if "is_anomaly" not in anomaly_df.columns:
+        anomaly_df["is_anomaly"] = False
+    st.session_state["anomalies"] = anomaly_df
+    st.session_state["benford"] = benford_analysis(df)
+    st.session_state["vendors"] = find_similar_vendors(df)
+    st.session_state["risk_graph"] = build_risk_graph(df)
+    st.session_state["explanations"] = explain_risk(df)
+    anomaly_count = int(st.session_state["anomalies"]["is_anomaly"].sum()) if "is_anomaly" in st.session_state["anomalies"].columns else 0
+    st.session_state["risk_scores"] = {
+        "total": len(df),
+        "anomaly_count": anomaly_count,
+        "overall_risk": "High" if anomaly_count > len(df) * 0.1 else "Medium"
+    }
+
+    try:
+        st.session_state["audit_memo"] = generate_audit_memo(
+            df,
+            st.session_state.get("risk_scores", {}),
+            st.session_state.get("readiness", {})
+        )
+    except Exception:
+        st.session_state["audit_memo"] = None
+
+    # --- Simulated Bank Reconciliation (Demo Mode) ---
+    import numpy as np
+    try:
+        from ml.fea_reconcilation.recon import reconcile
+        
+        df_recon = df.copy()
+        # Sandbox the schema so we don't pollute global df!
+        df_recon.columns = df_recon.columns.str.strip().str.lower().str.replace(' ', '_')
+        
+        # Guarantee invoice_id for the merge
+        if "invoice_id" not in df_recon.columns:
+            df_recon["invoice_id"] = df_recon.index.astype(str)
             
-            # Pre-compute data that doesn't need a button press
-            st.session_state["readiness"] = compute_readiness_score(df)
-            st.session_state["vendor_matches"] = find_similar_vendors(df)
-            st.session_state["risk_explanations"] = explain_risk(df)
-            st.session_state["risk_summary"] = None
+        bank_df = df_recon.copy()
+        bank_df["bank_txn_id"] = "BTX-" + bank_df.index.astype(str)
+        
+        if "amount" in bank_df.columns:
+            bank_df["amount"] = pd.to_numeric(bank_df["amount"], errors="coerce").fillna(0)
             
-            # Reset explicit triggers
-            st.session_state["df_anomaly"] = None
-            st.session_state["benford_df"] = None
+            # Form realistic variations (PARTIAL)
+            random_idx = bank_df.sample(frac=0.3, random_state=42).index
+            bank_df.loc[random_idx, "amount"] *= np.random.uniform(0.8, 1.2, size=len(random_idx))
             
-        except Exception as e:
-            st.sidebar.error(f"Error loading file: {e}")
+            # Form missing cases (MISSING)
+            missing_idx = bank_df.sample(frac=0.2, random_state=1).index
+            bank_df = bank_df.drop(missing_idx)
+            
+        rec_output = reconcile(df_recon, bank_df)
+        
+        if not hasattr(rec_output, "columns"):
+            rec_output = pd.DataFrame(rec_output)
+            
+        if "status" not in rec_output.columns:
+            # Safe fallback if status wasn't generated
+            rec_output["status"] = rec_output.apply(
+                lambda row:
+                    "MATCHED" if abs(row.get("amount_ledger", 0) - row.get("amount_bank", 0)) < 1
+                    else "PARTIAL" if pd.notna(row.get("amount_bank"))
+                    else "MISSING",
+                axis=1
+            )
+            
+        st.session_state["reconciliation"] = rec_output
+        st.session_state["reconciliation_simulated"] = True
+    except Exception as e:
+        print("RECONCILIATION ERROR:", e)
+        st.session_state["reconciliation"] = None
 
-# --- MAIN APP ROUTING ---
-if st.session_state["df"] is None:
-    st.info("👋 Welcome to LedgerSpy! Please upload a CSV file in the sidebar to begin.")
-    st.stop()
+# (Removed st.stop() so that UI layouts and empty states render even without a dataset)
+if "df" not in st.session_state:
+    st.info("👈 Upload a CSV from the sidebar to begin.")
 
-# Trigger ML logic from UI interactions
-if "run_anomaly" in st.session_state and st.session_state["run_anomaly"]:
-    st.session_state["df_anomaly"] = detect_anomalies(st.session_state["df"])
-    st.session_state["benford_df"] = benford_analysis(st.session_state["df"])
-    st.session_state["run_anomaly"] = False # Reset trigger
-
-# Trigger Risk Memo Generation
-if "generate_memo" in st.session_state and st.session_state["generate_memo"]:
-    st.session_state["risk_summary"] = get_risk_scores(st.session_state["df"])
-    st.session_state["generate_memo"] = False
-
-# Render selected section
-sections[selection]()
+if st.sidebar.checkbox("Debug"):
+    st.write(st.session_state)
+    
+# Route to sections
+if section == "📤 Upload & Preview":
+    render_upload()
+elif section == "📋 Data Integrity":
+    render_integrity()
+elif section == "📊 Benford's Law":
+    render_benford()
+elif section == "🚨 Anomaly Detection":
+    render_anomaly()
+elif section == "🔗 Fuzzy Vendor Match":
+    render_fuzzy()
+elif section == "🏦 Reconciliation":
+    render_reconciliation()
+elif section == "🕸️ Relational Risk Map":
+    render_risk_map()
+elif section == "🧠 Explainable Risk":
+    render_explainability()
+elif section == "📝 Dashboard & Memo":
+    render_dashboard()
+elif section == "📈 Monte Carlo Stress Test":
+    render_simulation()
+elif section == "🏦 Industry Benchmark":
+    render_benchmark()
