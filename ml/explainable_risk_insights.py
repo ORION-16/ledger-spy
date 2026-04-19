@@ -547,8 +547,8 @@ def generate_rule_explanations(df: pd.DataFrame) -> pd.DataFrame:
     # ------------------------------------------------------------------ #
     # C) Duplicate / fuzzy vendor risk
     # ------------------------------------------------------------------ #
-    dup_score = df["fuzzy_duplicate_flag"].fillna(0).astype(float)
-    sim_score  = df["fuzzy_similarity"].fillna(0).astype(float) / 100.0
+    dup_score = df["fuzzy_duplicate_flag"].fillna(0).astype(float) if "fuzzy_duplicate_flag" in df.columns else pd.Series(0.0, index=df.index)
+    sim_score  = df["fuzzy_similarity"].fillna(0).astype(float) / 100.0 if "fuzzy_similarity" in df.columns else pd.Series(0.0, index=df.index)
     res["duplicate_vendor_sub"] = (dup_score * 0.6 + sim_score * 0.4).clip(0, 1)
 
     # ------------------------------------------------------------------ #
@@ -568,8 +568,11 @@ def generate_rule_explanations(df: pd.DataFrame) -> pd.DataFrame:
     # ------------------------------------------------------------------ #
     # E) Timing risk
     # ------------------------------------------------------------------ #
-    hour = df["_hour"].fillna(12).astype(int)
-    dow  = df["_day_of_week"].fillna(1).astype(int)
+    LATE_NIGHT_HOURS = {0, 1, 2, 3, 4}
+    WEEKEND_DAYS = {5, 6}
+    
+    hour = df["_hour"].fillna(12).astype(int) if "_hour" in df.columns else pd.Series(12, index=df.index).astype(int)
+    dow  = df["_day_of_week"].fillna(1).astype(int) if "_day_of_week" in df.columns else pd.Series(1, index=df.index).astype(int)
     timing = hour.isin(LATE_NIGHT_HOURS).astype(float) * 0.6 + dow.isin(WEEKEND_DAYS).astype(float) * 0.4
     res["timing_sub"] = timing.clip(0, 1)
 
@@ -621,10 +624,13 @@ def calculate_final_scores(df: pd.DataFrame, rule_df: pd.DataFrame, shap_df: pd.
     """
     log.info("[SCORE] Calculating final composite risk scores …")
 
-    base = df[["txn_id", "vendor_name", "amount", "approver", "department",
-               "payment_mode", "narration", "_hour", "_day_of_week",
-               "vendor_location_risk", "velocity_score",
-               "fuzzy_duplicate_flag", "fuzzy_similarity"]].copy() if "txn_id" in df.columns else df.copy()
+    cols = ["txn_id", "vendor_name", "amount", "approver", "department",
+            "payment_mode", "narration", "_hour", "_day_of_week",
+            "vendor_location_risk", "velocity_score",
+            "fuzzy_duplicate_flag", "fuzzy_similarity"]
+    existing_cols = [c for c in cols if c in df.columns]
+    
+    base = df[existing_cols].copy() if "txn_id" in df.columns else df.copy()
 
     # Weighted composite (0–1)
     w = WEIGHTS
@@ -1270,6 +1276,24 @@ def main():
     )
 
     print(json.dumps(result, indent=2))
+
+
+def explain_dataset(df: pd.DataFrame) -> pd.DataFrame:
+    """Wrapper function for Streamlit App safely extracting explaining scores."""
+    if df is None or df.empty:
+        return df
+    
+    # 1. Rule Engine Explanations
+    rule_df = generate_rule_explanations(df)
+    
+    # 2. Final Risk Score (Mock empty SHAP DF for UI fast performance)
+    shap_df = pd.DataFrame(index=df.index)
+    scored = calculate_final_scores(df, rule_df, shap_df)
+    
+    # 3. Add narratives
+    scored = build_narratives(scored)
+    
+    return scored
 
 
 if __name__ == "__main__":

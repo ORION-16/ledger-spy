@@ -1,5 +1,6 @@
 def generate_audit_memo(df, risk_scores, readiness):
     import datetime
+    import pandas as pd
     try:
         total = risk_scores.get("total", len(df))
         anomalies = risk_scores.get("anomaly_count", 0)
@@ -11,19 +12,41 @@ def generate_audit_memo(df, risk_scores, readiness):
 
         # Dynamically extract basic statistics from the DataFrame
         amount_col = next((col for col in df.columns if "amount" in col.lower()), None)
-        total_val = float(df[amount_col].sum()) if amount_col else 0.0
-        avg_val = float(df[amount_col].mean()) if amount_col else 0.0
-        max_val = float(df[amount_col].max()) if amount_col and not df.empty else 0.0
+        if amount_col:
+            amount_series = pd.to_numeric(df[amount_col], errors="coerce").fillna(0)
+            total_val = float(amount_series.sum())
+            avg_val = float(amount_series.mean())
+            max_val = float(amount_series.max()) if not df.empty else 0.0
+        else:
+            amount_series = pd.Series(dtype="float64")
+            total_val = 0.0
+            avg_val = 0.0
+            max_val = 0.0
         
         vendor_col = next((col for col in df.columns if "vendor" in col.lower()), None)
         unique_vendors = df[vendor_col].nunique() if vendor_col else "Unknown"
 
+        date_col = next((col for col in df.columns if "date" in col.lower()), None)
+        if date_col:
+            parsed_dates = pd.to_datetime(df[date_col], errors="coerce")
+            valid_dates = parsed_dates.dropna()
+            if not valid_dates.empty:
+                date_range = f"{valid_dates.min().date()} to {valid_dates.max().date()}"
+            else:
+                date_range = "Not Available"
+        else:
+            date_range = "Not Available"
+
         # Benford / Fraud indicators (rough estimations if exact not present)
         is_fraud_col = next((col for col in df.columns if "fraud" in col.lower() or "suspicious" in col.lower()), None)
-        fraud_flags = int(df[is_fraud_col].sum()) if is_fraud_col else 0
+        if is_fraud_col:
+            fraud_series = df[is_fraud_col].astype(str).str.strip().str.lower()
+            fraud_flags = int(fraud_series.isin(["1", "true", "yes", "y"]).sum())
+        else:
+            fraud_flags = 0
 
         # High-risk threshold (configurable)
-        high_value_trans = int((df[amount_col] > (avg_val * 3)).sum()) if amount_col else 0
+        high_value_trans = int((amount_series > (avg_val * 3)).sum()) if amount_col else 0
 
         anomaly_pct = (anomalies / max(total, 1)) * 100
 
