@@ -46,8 +46,8 @@ except ImportError:
     def render_benford(): st.warning("Benford UI not implemented yet.")
 try:
     from ui.risk_map import render_risk_map
-except ImportError:
-    def render_risk_map(): st.warning("Risk Map UI not implemented yet.")
+except Exception as e:
+    def render_risk_map(): st.warning(f"Risk Map UI error: {e}")
 try:
     from ui.explainability import render_explainability
 except ImportError:

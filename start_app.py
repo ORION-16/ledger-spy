@@ -3,6 +3,7 @@ import sys
 import threading
 import time
 import os
+import webbrowser
 
 def run_landing_page():
     print("🚀 Starting Landing Page on http://localhost:8000")
@@ -14,7 +15,8 @@ def run_landing_page():
 def run_streamlit():
     print("📊 Starting LedgerSpy Dashboard on http://localhost:8501")
     # Runs the main Streamlit application
-    subprocess.run([sys.executable, "-m", "streamlit", "run", "streamlit-app/app.py"])
+    # Use --server.headless true to prevent Streamlit from opening its own browser tab
+    subprocess.run([sys.executable, "-m", "streamlit", "run", "streamlit-app/app.py", "--server.headless", "true"])
 
 if __name__ == "__main__":
     # Ensure we are running from the ledger-spy directory
@@ -27,6 +29,10 @@ if __name__ == "__main__":
     t1.start()
     time.sleep(1) # Give the landing page a second to boot before starting Streamlit
     t2.start()
+    
+    # Automatically open the landing page in the user's default browser
+    print("🌐 Opening Landing Page in browser...")
+    webbrowser.open("http://localhost:8000")
 
     try:
         # Keep the main thread alive
