@@ -4,11 +4,19 @@ import streamlit.components.v1 as components
 import sys
 import os
 
+# Robust path handling to find ml and pyvis
+curr_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.abspath(os.path.join(curr_dir, "..", ".."))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
 try:
+    import pyvis
     from ml.relationship_risk_mapping import run_risk_pipeline
-except ImportError:
-    # Add root folder if necessary
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+except ImportError as e:
+    # Explicitly catch the missing dependency and show path for debugging
+    st.error(f"Critical Dependency Missing: {str(e)}")
+    # Fallback import attempt
     from ml.relationship_risk_mapping import run_risk_pipeline
 
 def render_risk_map():
