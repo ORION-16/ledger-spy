@@ -6,7 +6,7 @@ def render_explainability():
     
     st.markdown("""
     <div class="card">
-        <h3>🧠 Explainable Risk Insights</h3>
+        <h3>Explainable Risk Insights</h3>
         <p>Contextual breakdown of identified anomalies</p>
     </div>
     """, unsafe_allow_html=True)

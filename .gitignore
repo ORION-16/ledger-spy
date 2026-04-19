@@ -13,3 +13,26 @@ setup_hologram.py
 # Generated artifacts
 risk_graph.html
 *.html
+
+# Cache directories
+cache/
+streamlit-app/cache/
+__pycache__/
+*.pyc
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Ad-hoc Python patch scripts
+*.bak
+patch_*.py
+add_icons*.py
+find_emojis.py
+fix_*.py
+debug_*.py

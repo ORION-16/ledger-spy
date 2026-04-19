@@ -7,7 +7,7 @@ def render_reconciliation():
     st.markdown("""
     <div class="card" style="padding: 16px 24px; margin-bottom: 24px;">
         <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
-            🏦 Bank Reconciliation
+            Bank Reconciliation
         </h2>
         <p style="margin-top: 4px; color: #9ca3af;">Match ledger transactions with bank records and identify mismatches.</p>
     </div>
@@ -19,15 +19,33 @@ def render_reconciliation():
     # reconcile() needs TWO dataframes: ledger (already uploaded) + bank CSV.
     # We let the user upload the bank statement right here in this view.
     if "df" not in st.session_state:
-        st.info("No ledger data available. Please upload a dataset to process.")
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown('''
+            <div class="notice-box">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px; filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.4));"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+<div class="notice-box-title">No Dataset Loaded</div>
+                <div class="notice-box-subtitle">Navigate to the Upload & Preview section to process ledger data.</div>
+            </div>
+            ''', unsafe_allow_html=True)
         return
 
-    st.subheader("📂 Upload Bank Statement")
-    bank_file = st.file_uploader(
-        "Upload your Bank CSV (must contain: invoice_id, bank_txn_id, amount)",
-        type=["csv"],
-        key="bank_csv_uploader",
-    )
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown('''
+        <div class="notice-box">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+            <div class="notice-box-title">Upload Bank Statement</div>
+            <div class="notice-box-subtitle">Drag and drop your Bank CSV here, or click the "Upload" button.<br><span style="font-size:0.85em; opacity:0.7;">Requires: invoice_id, bank_txn_id, amount</span></div>
+        </div>
+        ''', unsafe_allow_html=True)
+        bank_file = st.file_uploader(
+            "Upload Bank Statement",
+            type=["csv"],
+            key="bank_csv_uploader",
+            label_visibility="collapsed"
+        )
 
     if bank_file is not None:
         try:
@@ -61,14 +79,10 @@ def render_reconciliation():
             st.session_state["reconciliation_simulated"] = False
             data = rec_output
         except Exception as e:
-            st.error(f"Reconciliation failed: {e}", icon="🚨")
+            st.error(f"Reconciliation failed: {e}", icon="")
             return
 
     if data is None or not hasattr(data, "columns") or len(data) == 0:
-        st.info(
-            "Upload a bank statement above to run reconciliation.",
-            icon="ℹ️",
-        )
         return
 
     # Warning for simulation
@@ -77,7 +91,7 @@ def render_reconciliation():
 
     # ── KPIs ─────────────────────────────────────────────────────────────────
     st.divider()
-    st.subheader("📊 Summary")
+    st.subheader("Summary")
 
     total = len(data)
     status_col_present = "status" in data.columns
@@ -99,7 +113,7 @@ def render_reconciliation():
     st.divider()
 
     # ── Filter ───────────────────────────────────────────────────────────────
-    st.subheader("🔍 Filter Results")
+    st.subheader(" Filter Results")
 
     filtered = data.copy()
     if status_col_present:
@@ -117,7 +131,7 @@ def render_reconciliation():
             filtered = data[data["status"] == status_map[filter_option]]
 
     # ── Results table ─────────────────────────────────────────────────────────
-    st.subheader("📋 Results")
+    st.subheader("Results")
     MAX_ROWS = 500
     st.caption(f"Showing {min(len(filtered), MAX_ROWS)} of {len(filtered)} rows")
 

@@ -21,15 +21,29 @@ def apply_global_styles():
     div.stRadio > div { gap: 8px; }
     div[data-testid="stRadio"] div[role="radiogroup"] > label > div:first-of-type { display: none !important; }
     div[data-testid="stRadio"] div[role="radiogroup"] > label {
-        padding: 12px 14px;
+        padding: 14px 18px; /* Balanced left padding */
         background: #111111;
         border: 1px solid #222222;
         border-radius: 10px;
-        margin-bottom: 2px;
+        margin-bottom: 8px; /* Equal vertical spacing */
         transition: all 0.3s ease;
         cursor: pointer;
         position: relative;
         overflow: hidden;
+        display: flex;
+        flex-direction: row;
+        align-items: center; /* Centered vertically */
+        justify-content: flex-start; /* Aligned left */
+        width: 100%; /* Consistent width */
+        box-sizing: border-box;
+    }
+    div[data-testid="stRadio"] div[role="radiogroup"] > label p {
+        margin: 0;
+        font-size: 0.95rem; /* modern slightly larger text */
+        display: flex;
+        align-items: center;
+        gap: 12px; /* space between icon and text */
+        width: 100%;
     }
     div[data-testid="stRadio"] div[role="radiogroup"] > label:hover {
         background: rgba(139, 92, 246, 0.08);
@@ -72,8 +86,9 @@ def apply_global_styles():
         -webkit-backdrop-filter: blur(16px);
         border: 1px solid rgba(255,255,255,0.08); /* Smoother, more even borders */
         border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        padding: 32px; /* More padding between content and border */
+        margin-bottom: 24px; /* Wider spacing between sections */
+        box-shadow: 0 4px 24px rgba(0,0,0,0.45);
         transition: all 0.3s ease;
         position: relative;
         height: 100%; /* Force even height */
@@ -96,40 +111,49 @@ def apply_global_styles():
         box-shadow: 0 4px 30px rgba(139, 92, 246, 0.25);
     }
 
+    /* KPIs Streamline / Align */
     [data-testid="stMetricLabel"] > div > div > p { 
         color: #9ca3af !important; 
-        font-weight: 500; 
-        font-size: 0.85rem;
+        font-weight: 600; /* Bolded label */
+        font-size: 0.9rem; /* Cleaned sizing */
         letter-spacing: 0.05em;
         text-transform: uppercase;
         margin: 0;
+        text-align: left; /* Align neatly */
     }
     [data-testid="stMetricValue"] > div {
         color: #f3f4f6 !important; 
-        font-weight: 700; 
-        font-size: 2.4rem;
+        font-weight: 800; /* Bigger/bolder numbers */
+        font-size: 2.8rem;
         letter-spacing: -0.02em;
-        margin-top: 4px;
+        margin-top: 8px;
         line-height: 1;
+        text-align: left; /* Align neatly */
     }
 
-    /* Custom Headers */
+    /* Custom Headers - Bigger + bolder, more padding */
     h1, h2, h3 { 
         color: #ffffff !important; 
         letter-spacing: -0.02em; 
         font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 700 !important;
     }
+    h1 { font-size: 2.5rem !important; margin-bottom: 2rem !important; }
+    h2 { font-size: 2rem !important; margin-bottom: 1.5rem !important; }
+    h3 { font-size: 1.5rem !important; padding-bottom: 8px; margin-bottom: 1rem !important; }
+
     .card h3 {
         color: #e5e7eb;
-        font-size: 1.1rem;
+        font-size: 1.25rem !important;
+        font-weight: 600 !important;
         border-bottom: 1px solid rgba(255,255,255,0.06);
-        padding-bottom: 12px;
-        margin-bottom: 12px;
+        padding-bottom: 16px;
+        margin-bottom: 16px;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
     }
-    .card p { color: #9ca3af; font-size: 0.9rem; margin: 0; }
+    .card p { color: #a1a1aa; font-size: 0.95rem; margin: 0; line-height: 1.6; }
 
     /* Info / Warnings / Alert Boxes styling */
     [data-testid="stAlert"] {
@@ -209,5 +233,114 @@ def apply_global_styles():
         margin-bottom: 2rem;
     }
     .table-header-box h3 { margin: 0; color: #e5e7eb; display:flex; align-items: center; gap:8px; }
+
+
+    
+    /* --- MODERN NOTICE BOX (The AFTER image logic) --- */
+    
+    /* Target the column that contains the .notice-box marker */
+    div[data-testid="column"]:has(.notice-box) {
+        background: linear-gradient(135deg, #0a0b0e 0%, #161a1d 100%);
+        border: 1px solid rgba(34, 197, 94, 0.4) !important;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 8px 32px rgba(34, 197, 94, 0.08), inset 0 0 20px rgba(34, 197, 94, 0.05); /* Green glow border effect */
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+    }
+    
+    .notice-box {
+        margin-bottom: 8px;
+    }
+    .notice-box-title {
+        color: #ffffff;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        letter-spacing: -0.01em;
+    }
+    .notice-box-subtitle {
+        color: #9ca3af;
+        font-size: 1rem;
+        font-weight: 400;
+        margin: 0;
+    }
+
+    /* Style the file uploader INSIDE this column to lose its own borders and match gracefully! */
+    div[data-testid="column"]:has(.notice-box) [data-testid="stFileUploader"] {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0;
+        width: 100%;
+    }
+    
+    div[data-testid="column"]:has(.notice-box) [data-testid="stFileUploader"] > section {
+        border: 1px dashed rgba(255,255,255,0.1) !important; /* Subtle dotted inner line instead of harsh box */
+        background: rgba(0,0,0,0.2) !important;
+        border-radius: 12px;
+        padding: 24px;
+        width: 100%;
+    }
+    
+    /* Upload Button overrides inside our modern box */
+    div[data-testid="column"]:has(.notice-box) [data-testid="stFileUploader"] button {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
+        border-radius: 8px;
+        padding: 10px 32px;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    div[data-testid="column"]:has(.notice-box) [data-testid="stFileUploader"] button:hover {
+        background: rgba(34, 197, 94, 0.15) !important;
+        border-color: rgba(34, 197, 94, 0.5) !important;
+        color: #22c55e !important;
+        box-shadow: 0 0 16px rgba(34, 197, 94, 0.2);
+    }
+    /* Clean up default Streamlit texts in the uploader */
+    div[data-testid="column"]:has(.notice-box) [data-testid="stFileUploaderDropzoneInstructions"] {
+        display: none !important;
+    }
+    
+    div[data-testid="column"]:has(.notice-box) [data-testid="stFileUploader"] button {
+        /* Hide original text "Browse files" */
+        color: transparent !important;
+        position: relative;
+    }
+
+    div[data-testid="column"]:has(.notice-box) [data-testid="stFileUploader"] button::after {
+        content: 'Upload';
+        color: #ffffff;
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: color 0.3s ease;
+    }
+    
+    div[data-testid="column"]:has(.notice-box) [data-testid="stFileUploader"] button:hover::after {
+        color: #22c55e;
+    }
+
+    /* Small "or drag and drop" under the button if needed? We already have the subtitle in the box! but let's add it near the button as well */
+    div[data-testid="column"]:has(.notice-box) [data-testid="stFileUploader"] > section::after {
+        content: 'or drag and drop';
+        display: block;
+        text-align: center;
+        color: #6b7280;
+        font-size: 0.85rem;
+        margin-top: 12px;
+    }
 
     </style>''', unsafe_allow_html=True)

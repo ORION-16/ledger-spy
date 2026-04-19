@@ -3,6 +3,10 @@ import os
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, base_dir)
 
+CACHE_DIR = "cache"
+os.makedirs(CACHE_DIR, exist_ok=True)
+CACHE_FILE_PATH = os.path.join(CACHE_DIR, "uploaded.csv")
+
 # Task 1: Safe Import for Data Integrity
 try:
     from ml.fea_dataintegrity.data_integrity import compute_data_integrity
@@ -11,6 +15,15 @@ except Exception:
 
 import streamlit as st
 import pandas as pd
+
+if "df" not in st.session_state:
+    if os.path.exists(CACHE_FILE_PATH):
+        try:
+            df = pd.read_csv(CACHE_FILE_PATH)
+            st.session_state["df"] = df
+            st.session_state["needs_processing"] = True
+        except Exception:
+            st.session_state["df"] = None
 
 # ML imports with stub fallback
 from ml.fea_anomaly.anomaly import detect_anomalies
@@ -25,66 +38,104 @@ from ui.integrity import render_integrity
 try:
     from ui.anomaly import render_anomaly
 except ImportError:
-    def render_anomaly(): st.warning("Anomaly UI unavailable. Install required UI dependencies (e.g., plotly).", icon="🚧")
+    def render_anomaly(): st.warning("Anomaly UI unavailable. Install required UI dependencies (e.g., plotly).")
 from ui.fuzzy import render_fuzzy
 try:
     from ui.benford import render_benford
 except ImportError:
-    def render_benford(): st.warning("Benford UI not implemented yet.", icon="🚧")
+    def render_benford(): st.warning("Benford UI not implemented yet.")
 try:
     from ui.risk_map import render_risk_map
 except ImportError:
-    def render_risk_map(): st.warning("Risk Map UI not implemented yet.", icon="🚧")
+    def render_risk_map(): st.warning("Risk Map UI not implemented yet.")
 try:
     from ui.explainability import render_explainability
 except ImportError:
-    def render_explainability(): st.warning("Explainability UI not implemented yet.", icon="🚧")
+    def render_explainability(): st.warning("Explainability UI not implemented yet.")
 try:
     from ui.dashboard import render_dashboard
 except ImportError:
-    def render_dashboard(): st.warning("Dashboard UI unavailable. Install required UI dependencies (e.g., plotly).", icon="🚧")
+    def render_dashboard(): st.warning("Dashboard UI unavailable. Install required UI dependencies (e.g., plotly).")
 try:
     from ui.reconciliation import render_reconciliation
 except ImportError:
-    def render_reconciliation(): st.warning("Reconciliation UI not implemented yet.", icon="🚧")
+    def render_reconciliation(): st.warning("Reconciliation UI not implemented yet.")
 try:
     from ui.benchmark_page import render_benchmark
 except ImportError:
-    def render_benchmark(): st.warning("Benchmark UI not implemented yet.", icon="🚧")
+    def render_benchmark(): st.warning("Benchmark UI not implemented yet.")
 try:
     from ui.simulation import render_simulation
 except ImportError:
-    def render_simulation(): st.warning("Simulation UI not implemented yet.", icon="🚧")
+    def render_simulation(): st.warning("Simulation UI not implemented yet.")
 
 from ui.styles import apply_global_styles
 
-st.set_page_config(page_title="LedgerSpy", layout="wide", page_icon="🔍")
+st.set_page_config(page_title="LedgerSpy", layout="wide", page_icon="LineChart")
 apply_global_styles()
 
-st.sidebar.image("https://via.placeholder.com/150x50?text=LedgerSpy", width=150)
-st.sidebar.title("🔍 LedgerSpy")
-st.sidebar.caption("Air-Gapped Forensic Auditing")
-st.sidebar.divider()
+st.sidebar.markdown("""
+<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px; margin-top: 10px;">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+    </svg>
+    <span style="color: #ffffff; font-weight: 800; font-size: 1.6rem; letter-spacing: -0.02em;">LedgerSpy</span>
+</div>
+<div style="color: #9ca3af; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.02em; margin-bottom: 24px; margin-left: 2px;">Air-Gapped Forensic Auditing</div>
+""", unsafe_allow_html=True)
 
 section = st.sidebar.radio("Navigate", [
-    "📤 Upload & Preview",
-    "📋 Data Integrity",
-    "📊 Benford's Law",
-    "🚨 Anomaly Detection",
-    "🔗 Fuzzy Vendor Match",
-    "🏦 Reconciliation",
-    "🕸️ Relational Risk Map",
-    "🧠 Explainable Risk",
-    "📝 Dashboard & Memo",
-    "📈 Monte Carlo Stress Test",
-    "🏦 Industry Benchmark",
+    "Upload & Preview",
+    "Data Integrity",
+    "Benford's Law",
+    "Anomaly Detection",
+    "Fuzzy Vendor Match",
+    "Reconciliation",
+    "Relational Risk Map",
+    "Explainable Risk",
+    "Dashboard & Memo",
+    "Monte Carlo Stress Test",
+    "Industry Benchmark",
 ])
 
-uploaded_file = st.sidebar.file_uploader("Upload Ledger CSV", type=["csv"])
+if "df" not in st.session_state or section == "Upload & Preview":
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown('''
+        <div class="notice-box">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px; filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.4));"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div class="notice-box-title">Upload a CSV file to begin.</div>
+            <div class="notice-box-subtitle">Drag and drop your CSV file here, or click the "Upload" button.</div>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        uploaded_file = st.file_uploader("Upload Ledger CSV", type=["csv"], label_visibility="collapsed")
+        
+        if os.path.exists(CACHE_FILE_PATH):
+            col_msg, col_btn = st.columns([3,1])
+            with col_msg:
+                st.success("Previously uploaded CSV loaded.")
+            with col_btn:
+                if st.button("Clear Cache"):
+                    if os.path.exists(CACHE_FILE_PATH):
+                        os.remove(CACHE_FILE_PATH)
+                    st.session_state.pop("df", None)
+                    st.rerun()
+
+
+else:
+    uploaded_file = None
 
 if uploaded_file:
+    with open(CACHE_FILE_PATH, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    st.session_state["needs_processing"] = True
+
+if st.session_state.get("needs_processing", False) and os.path.exists(CACHE_FILE_PATH):
     with st.spinner("Processing Dataset & Executing Machine Learning Models..."):
-        df = pd.read_csv(uploaded_file)
+        df = pd.read_csv(CACHE_FILE_PATH)
         df.columns = df.columns.str.lower()
         st.session_state["df"] = df
 
@@ -179,10 +230,11 @@ if uploaded_file:
         except Exception as e:
             print("RECONCILIATION ERROR:", e)
             st.session_state["reconciliation"] = None
+            
+        st.session_state["needs_processing"] = False
 
 # (Removed st.stop() so that UI layouts and empty states render even without a dataset)
-if "df" not in st.session_state:
-    st.info("👈 Upload a CSV from the sidebar to begin.")
+# Notice removed per new design pattern
 
 if st.sidebar.checkbox("Debug"):
     st.write(st.session_state)
@@ -198,25 +250,25 @@ if "current_section" not in st.session_state or st.session_state["current_sectio
     st.session_state["current_section"] = section
 
 with st.spinner(f"Rendering {section_name}..."):
-    if section == "📤 Upload & Preview":
+    if section == "Upload & Preview":
         render_upload()
-    elif section == "📋 Data Integrity":
+    elif section == "Data Integrity":
         render_integrity()
-    elif section == "📊 Benford's Law":
+    elif section == "Benford's Law":
         render_benford()
-    elif section == "🚨 Anomaly Detection":
+    elif section == "Anomaly Detection":
         render_anomaly()
-    elif section == "🔗 Fuzzy Vendor Match":
+    elif section == "Fuzzy Vendor Match":
         render_fuzzy()
-    elif section == "🏦 Reconciliation":
+    elif section == "Reconciliation":
         render_reconciliation()
-    elif section == "🕸️ Relational Risk Map":
+    elif section == "Relational Risk Map":
         render_risk_map()
-    elif section == "🧠 Explainable Risk":
+    elif section == "Explainable Risk":
         render_explainability()
-    elif section == "📝 Dashboard & Memo":
+    elif section == "Dashboard & Memo":
         render_dashboard()
-    elif section == "📈 Monte Carlo Stress Test":
+    elif section == "Monte Carlo Stress Test":
         render_simulation()
-    elif section == "🏦 Industry Benchmark":
+    elif section == "Industry Benchmark":
         render_benchmark()

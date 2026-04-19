@@ -6,7 +6,7 @@ def render_anomaly():
     st.markdown("""
     <div class="card" style="padding: 16px 24px; margin-bottom: 24px;">
         <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
-            🚨 Anomaly Detection
+            Anomaly Detection
         </h2>
         <p style="margin-top: 4px; color: #9ca3af;">Identify statistical deviations and unusual transaction patterns across the ledger.</p>
     </div>
@@ -14,7 +14,15 @@ def render_anomaly():
     
     df = st.session_state.get("anomalies")
     if df is None or not isinstance(df, pd.DataFrame) or "is_anomaly" not in df.columns:
-        st.info("No anomaly data available. Please upload a dataset to process.")
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown('''
+            <div class="notice-box">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px; filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.4));"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+<div class="notice-box-title">No Dataset Loaded</div>
+                <div class="notice-box-subtitle">Navigate to the Upload & Preview section to process anomalies.</div>
+            </div>
+            ''', unsafe_allow_html=True)
         return
         
     total = len(df)

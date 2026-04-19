@@ -44,7 +44,7 @@ def render_dashboard():
         st.text_area("Generated Audit Memo", audit_memo, height=400)
     
         st.download_button(
-            label="📥 Download Memo",
+            label=" Download Memo",
             data=audit_memo,
             file_name="audit_memo.txt",
             mime="text/plain"

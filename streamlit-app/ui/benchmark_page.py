@@ -23,7 +23,7 @@ def _section(title: str) -> None:
 def render_benchmark() -> None:
 
     _page_header(
-        "🏦",
+        "",
         "Industry Benchmark",
         "Compares your anomaly rate against an industry baseline (~8%) using "
         "differential privacy noise — no exact company figure is ever stored or transmitted.",
@@ -34,7 +34,15 @@ def render_benchmark() -> None:
     if anomaly_df is None:
         anomaly_df = st.session_state.get("df")
     if anomaly_df is None:
-        st.info("📂  No dataset loaded. Upload a CSV from the sidebar first.")
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown('''
+            <div class="notice-box">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px; filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.4));"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+<div class="notice-box-title">No Dataset Loaded</div>
+                <div class="notice-box-subtitle">Navigate to the Upload & Preview section to begin.</div>
+            </div>
+            ''', unsafe_allow_html=True)
         return
 
     # ── Controls + run button ──────────────────────────────────────────────────
@@ -153,7 +161,7 @@ def render_benchmark() -> None:
             f"<span style='background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);"
             f"border-radius:8px;padding:7px 18px;font-size:0.95rem;font-weight:600;"
             f"color:{ratio_color}'>"
-            f"📊 {ratio_label}</span></div>",
+            f"{ratio_label}</span></div>",
             unsafe_allow_html=True,
         )
 
@@ -214,7 +222,7 @@ def render_benchmark() -> None:
     <div class="card" style="padding:16px 22px;">
         <h3 style="font-size:0.88rem !important;border-bottom:none !important;
                    padding-bottom:0 !important;margin-bottom:8px !important;">
-            🔒 Privacy & Methodology Notice
+             Privacy & Methodology Notice
         </h3>
         <p style="font-size:0.83rem;line-height:1.75;color:#9ca3af;">
             The disclosed company rate includes <strong style="color:#c4b5fd">Gaussian noise
