@@ -14,9 +14,13 @@ def run_landing_page():
 
 def run_streamlit():
     print("📊 Starting LedgerSpy Dashboard on http://localhost:8506")
+    # Use the specific venv python to ensure all installed packages are available
+    venv_python = os.path.join(os.path.dirname(__file__), "..", ".venv", "bin", "python")
+    python_cmd = venv_python if os.path.exists(venv_python) else sys.executable
+    
     # Runs the main Streamlit application
     # Use --server.headless true to prevent Streamlit from opening its own browser tab
-    subprocess.run([sys.executable, "-m", "streamlit", "run", "streamlit-app/app.py", "--server.port", "8506", "--server.headless", "true"])
+    subprocess.run([python_cmd, "-m", "streamlit", "run", "streamlit-app/app.py", "--server.port", "8506", "--server.headless", "true"])
 
 if __name__ == "__main__":
     # Ensure we are running from the ledger-spy directory
