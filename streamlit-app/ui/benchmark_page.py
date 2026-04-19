@@ -3,7 +3,6 @@ ui/benchmark_page.py — Privacy-Preserving Industry Benchmarking
 Full dedicated section with comparison chart, KPIs, privacy notice.
 """
 
-from ui.styles import apply_global_styles
 import streamlit as st
 import pandas as pd
 
@@ -22,7 +21,6 @@ def _section(title: str) -> None:
 
 
 def render_benchmark() -> None:
-    apply_global_styles()
 
     _page_header(
         "🏦",

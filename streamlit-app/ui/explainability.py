@@ -1,10 +1,8 @@
-from ui.styles import apply_global_styles
 import streamlit as st
 import pandas as pd
 from ml.explainable_risk_insights import explain_dataset
 
 def render_explainability():
-    apply_global_styles()
     
     st.markdown("""
     <div class="card">
@@ -26,7 +24,10 @@ def render_explainability():
     if anomalies_df is not None and not anomalies_df.empty:
         for col in ["fraud_probability", "anomaly_score", "hybrid_risk_score", "velocity_score", "vendor_location_risk"]:
             if col in anomalies_df.columns:
-                calc_df[col] = anomalies_df[col]
+                if len(calc_df) == len(anomalies_df):
+                    calc_df[col] = anomalies_df[col].values
+                elif "txn_id" in calc_df.columns and "txn_id" in anomalies_df.columns:
+                    calc_df = calc_df.merge(anomalies_df[["txn_id", col]], on="txn_id", how="left")
 
     # 2. Merge Fuzzy vendor metrics
     vendors_res = st.session_state.get("vendors")
@@ -75,21 +76,33 @@ def render_explainability():
         display_df = pd.DataFrame(result)
         
     if "risk_tier" in display_df.columns:
+        # Reorder columns to put important ones first
+        front_cols = ["risk_tier", "final_risk_score", "txn_id", "vendor_name", "amount", "top_reason_1"]
+        existing_front = [c for c in front_cols if c in display_df.columns]
+        other_cols = [c for c in display_df.columns if c not in existing_front]
+        display_df = display_df[existing_front + other_cols]
+
         high = (display_df["risk_tier"] == "HIGH").sum()
         medium = (display_df["risk_tier"] == "MEDIUM").sum()
         low = (display_df["risk_tier"] == "LOW").sum()
         st.write(f"High: {high}, Medium: {medium}, Low: {low}")
 
-        st.write("High-risk entries:")
-        st.dataframe(display_df[display_df["risk_tier"] == "HIGH"].head(100), use_container_width=True)
+        st.write("Top Risky Entries:")
+        # Sort so highest risk scores appear at the top, and take the top 100 rows
+        top_risky_df = display_df.sort_values(by="final_risk_score", ascending=False).head(100)
+        st.dataframe(top_risky_df, use_container_width=True)
     elif "risk" in display_df.columns:
         high = (display_df["risk"] == "HIGH").sum()
         medium = (display_df["risk"] == "MEDIUM").sum()
         low = (display_df["risk"] == "LOW").sum()
         st.write(f"High: {high}, Medium: {medium}, Low: {low}")
 
-        st.write("High-risk entries:")
-        st.dataframe(display_df[display_df["risk"] == "HIGH"].head(100), use_container_width=True)
+        st.write("Top Risky Entries:")
+        # Define a sorting hierarchy if only a categorical string exists
+        risk_map = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
+        display_df["_sort_helper"] = display_df["risk"].map(risk_map).fillna(0)
+        top_risky_df = display_df.sort_values(by="_sort_helper", ascending=False).drop(columns=["_sort_helper"]).head(100)
+        st.dataframe(top_risky_df, use_container_width=True)
 
     st.write("All entries (Sampled):")
     st.dataframe(display_df.head(500), use_container_width=True)

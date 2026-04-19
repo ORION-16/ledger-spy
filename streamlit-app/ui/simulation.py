@@ -3,7 +3,6 @@ ui/simulation.py — Monte Carlo Going Concern Stress Test
 Full dedicated section with charts, KPIs, and interpretation.
 """
 
-from ui.styles import apply_global_styles
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -38,7 +37,6 @@ def _risk_badge_html(risk_level: str, risk_color: str) -> str:
 
 
 def render_simulation() -> None:
-    apply_global_styles()
 
     _page_header(
         "📈",

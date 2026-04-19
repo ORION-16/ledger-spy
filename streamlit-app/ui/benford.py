@@ -1,9 +1,7 @@
-from ui.styles import apply_global_styles
 import streamlit as st
 import pandas as pd
 
 def render_benford():
-    apply_global_styles()
     
     st.markdown("""
     <div class="card">

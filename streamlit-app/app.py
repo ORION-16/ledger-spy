@@ -56,7 +56,10 @@ try:
 except ImportError:
     def render_simulation(): st.warning("Simulation UI not implemented yet.", icon="🚧")
 
+from ui.styles import apply_global_styles
+
 st.set_page_config(page_title="LedgerSpy", layout="wide", page_icon="🔍")
+apply_global_styles()
 
 st.sidebar.image("https://via.placeholder.com/150x50?text=LedgerSpy", width=150)
 st.sidebar.title("🔍 LedgerSpy")

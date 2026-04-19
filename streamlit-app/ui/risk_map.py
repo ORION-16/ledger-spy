@@ -1,4 +1,3 @@
-from ui.styles import apply_global_styles
 import streamlit as st
 
 import pandas as pd
@@ -6,7 +5,6 @@ from ml.relationship_risk_mapping import run_risk_pipeline
 import streamlit.components.v1 as components
 
 def render_risk_map():
-    apply_global_styles()
     
     st.markdown("""
     <div class="card page-header">

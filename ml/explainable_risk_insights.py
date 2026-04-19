@@ -90,17 +90,17 @@ CHART_DIR.mkdir(parents=True, exist_ok=True)
 # Weights for final risk score composition (must sum to 1.0)
 # ---------------------------------------------------------------------------
 WEIGHTS = {
-    "model_risk":        0.40,
-    "relationship_risk": 0.25,
-    "duplicate_vendor":  0.15,
-    "amount_risk":       0.10,
+    "model_risk":        0.55,
+    "amount_risk":       0.15,
+    "relationship_risk": 0.10,
+    "duplicate_vendor":  0.10,
     "timing_risk":       0.05,
     "velocity_risk":     0.05,
 }
 
 # Risk thresholds
-RISK_HIGH   = 70
-RISK_MEDIUM = 40
+RISK_HIGH   = 25
+RISK_MEDIUM = 15
 
 # SHAP sampling cap for large datasets
 SHAP_SAMPLE_CAP = 5_000

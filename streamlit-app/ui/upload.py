@@ -1,8 +1,6 @@
-from ui.styles import apply_global_styles
 import streamlit as st
 
 def render_upload():
-    apply_global_styles()
     
     st.markdown("""
     <div class="card">
