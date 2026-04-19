@@ -47,7 +47,8 @@ except ImportError:
 try:
     from ui.risk_map import render_risk_map
 except Exception as e:
-    def render_risk_map(): st.warning(f"Risk Map UI error: {e}")
+    err_msg = str(e)
+    def render_risk_map(): st.warning(f"Risk Map UI error: {err_msg}")
 try:
     from ui.explainability import render_explainability
 except ImportError:
