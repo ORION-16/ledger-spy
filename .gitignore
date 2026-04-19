@@ -3,3 +3,13 @@ __pycache__/
 *.pyc
 .env
 uploads/
+
+# Debug and temporary testing scripts
+debug*.py
+test_*.py
+patch_weights.py
+setup_hologram.py
+
+# Generated artifacts
+risk_graph.html
+*.html
